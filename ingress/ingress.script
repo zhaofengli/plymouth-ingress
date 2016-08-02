@@ -84,8 +84,8 @@ key_sprite.SetX(entry_box_sprite.GetX() + scaled_entry_box_image.GetWidth() - sc
 key_sprite.SetY(wordmark_sprite.GetY() + wordmark_image.GetHeight() + scaled_entry_box_image.GetHeight() / 2 + 8);
 
 # === Hide the sprites for now ===
-#entry_box_sprite.SetOpacity(0);
-#key_sprite.SetOpacity(0);
+entry_box_sprite.SetOpacity(0);
+key_sprite.SetOpacity(0);
 
 # === Show common UI ===
 fun show_common_dialogue_ui (prompt) {
@@ -105,7 +105,7 @@ fun display_normal_callback () {
 	global.question_entry_sprite = Sprite();
 	global.prompt_sprite = Sprite();
 }
-#Plymouth.SetDisplayNormalFunction(display_normal_callback);
+Plymouth.SetDisplayNormalFunction(display_normal_callback);
 
 # === Show question dialogues ===
 fun display_question_callback (prompt, entry) {
