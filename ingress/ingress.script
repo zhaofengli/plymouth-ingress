@@ -1,0 +1,144 @@
+# == ADA Is Watching You (tm) ==
+# === Set the background ===
+Window.SetBackgroundTopColor(0, 0, 0);
+Window.SetBackgroundBottomColor(0.0392, 0.3019, 0.4039);
+
+# === Load the images ===
+inner_wheel_image = Image("inner_wheel.png");
+outer_wheel_image = Image("outer_wheel.png");
+wordmark_image = Image("wordmark.png");
+
+# === Scale down the images ===
+scaled_inner_wheel_image = inner_wheel_image.Scale(
+	inner_wheel_image.GetWidth() / 3,
+	inner_wheel_image.GetHeight() / 3
+);
+scaled_outer_wheel_image = outer_wheel_image.Scale(
+	outer_wheel_image.GetWidth() / 3,
+	outer_wheel_image.GetHeight() / 3
+);
+scaled_wordmark_image = wordmark_image.Scale(
+	wordmark_image.GetWidth() / 2,
+	wordmark_image.GetHeight() / 2,
+);
+
+# === Create sprites ===
+inner_wheel_sprite = Sprite(scaled_inner_wheel_image);
+outer_wheel_sprite = Sprite(scaled_outer_wheel_image);
+wordmark_sprite = Sprite(scaled_wordmark_image);
+
+# === Position the sprites ===
+inner_wheel_sprite.SetX(Window.GetWidth() / 2 - scaled_inner_wheel_image.GetWidth() / 2);
+inner_wheel_sprite.SetY(Window.GetHeight() / 2 - scaled_inner_wheel_image.GetHeight() / 2);
+outer_wheel_sprite.SetX(Window.GetWidth() / 2 - scaled_outer_wheel_image.GetWidth() / 2);
+outer_wheel_sprite.SetY(Window.GetHeight() / 2 - scaled_outer_wheel_image.GetHeight() / 2);
+wordmark_sprite.SetX(Window.GetWidth() / 2 - scaled_wordmark_image.GetWidth() / 2);
+wordmark_sprite.SetY(outer_wheel_sprite.GetY() + scaled_outer_wheel_image.GetHeight() + scaled_wordmark_image.GetHeight() / 2);
+
+# === Let ADA come alive ===
+# The current frame of the rotation
+frame = 0; # 50fps; 0 <= frame <= 599
+
+fun refresh_callback () {
+	global.frame++;
+	if (frame > 599) {
+		global.frame = 0;
+	}
+	# Calculate angle
+	rad = Math.Pi * ( frame / 25 ); # 1 rev/s
+	inner_wheel_sprite.SetImage(scaled_inner_wheel_image.Rotate(rad / 12));
+	outer_wheel_sprite.SetImage(scaled_outer_wheel_image.Rotate(-rad / 12));
+}
+Plymouth.SetRefreshFunction (refresh_callback);
+
+# == Handle dialogues ==
+# Are we showing a dialogue right now?
+dialogue = 0; # 0 - nope; 1 - question; 2 - password
+prompt_sprite = Sprite();
+question_entry_sprite = Sprite();
+password_entry_bullets = NULL;
+
+# === Load the images ===
+entry_box_image = Image("entry_box.png");
+key_image = Image("key.png");
+password_dot_image = Image("password_dot.png");
+
+# === Scale down the images ===
+scaled_entry_box_image = entry_box_image.Scale(
+	entry_box_image.GetWidth() / 2,
+	entry_box_image.GetHeight() / 2
+);
+scaled_key_image = key_image.Scale(
+	key_image.GetWidth() / 2,
+	key_image.GetHeight() / 2
+);
+
+# === Create sprites ===
+entry_box_sprite = Sprite(scaled_entry_box_image);
+key_sprite = Sprite(scaled_key_image);
+
+# === Position the sprites ===
+entry_box_sprite.SetX(Window.GetWidth() / 2 - scaled_entry_box_image.GetWidth() / 2);
+entry_box_sprite.SetY(wordmark_sprite.GetY() + wordmark_image.GetHeight() + scaled_entry_box_image.GetHeight() / 2);
+key_sprite.SetX(entry_box_sprite.GetX() + scaled_entry_box_image.GetWidth() - scaled_key_image.GetWidth() - 25);
+key_sprite.SetY(wordmark_sprite.GetY() + wordmark_image.GetHeight() + scaled_entry_box_image.GetHeight() / 2 + 8);
+
+# === Hide the sprites for now ===
+#entry_box_sprite.SetOpacity(0);
+#key_sprite.SetOpacity(0);
+
+# === Show common UI ===
+fun show_common_dialogue_ui (prompt) {
+	global.entry_box_sprite.SetOpacity(1);
+	local.prompt_image = Image.Text(prompt, 1, 1, 1, 1);
+	global.prompt_sprite = Sprite(local.prompt_image);
+	global.prompt_sprite.SetX(global.entry_box_sprite.GetX() + 5);
+	global.prompt_sprite.SetY(global.entry_box_sprite.GetY() - local.prompt_image.GetHeight());
+}
+
+# === Hide dialogues ===
+fun display_normal_callback () {
+	global.dialogue = 0;
+	global.entry_box_sprite.SetOpacity(0);
+	global.key_sprite.SetOpacity(0);
+	global.password_entry_bullets = NULL;
+	global.question_entry_sprite = Sprite();
+	global.prompt_sprite = Sprite();
+}
+#Plymouth.SetDisplayNormalFunction(display_normal_callback);
+
+# === Show question dialogues ===
+fun display_question_callback (prompt, entry) {
+	global.dialogue = 1;
+	show_common_dialogue_ui(prompt);
+	local.entry_image = Image.Text(entry, 1, 1, 1, 1);
+	global.question_entry_sprite = Sprite(local.entry_image);
+	global.question_entry_sprite.SetX(global.entry_box_sprite.GetX() + 8);
+	global.question_entry_sprite.SetY(global.entry_box_sprite.GetY() + local.entry_image.GetHeight() / 2);
+}
+Plymouth.SetDisplayQuestionFunction(display_question_callback);
+
+# === Show password dialogues ===
+fun display_password_callback (prompt, bullets) {
+	global.dialogue = 2;
+	show_common_dialogue_ui(prompt);
+	global.key_sprite.SetOpacity(1);
+	local.bullet_x = global.entry_box_sprite.GetX() + 8;
+	local.bullet_y = global.entry_box_sprite.GetY() + global.password_dot_image.GetHeight() / 2;
+	local.bullet_width = global.password_dot_image.GetWidth();
+	for (i = 0; global.password_entry_bullets[i] || i < bullets; i++) {
+		if (!global.password_entry_bullets[i]) {
+			global.password_entry_bullets[i] = Sprite();
+			global.password_entry_bullets[i].SetImage(global.password_dot_image);
+			global.password_entry_bullets[i].SetY(local.bullet_y);
+			global.password_entry_bullets[i].SetX(local.bullet_x + i * global.password_dot_image.GetWidth());
+			global.password_entry_bullets[i].SetZ(global.entry_box_sprite.GetX() + 1);
+		}
+		global.password_entry_bullets[i].SetOpacity(1);
+		if (i >= bullets) {
+			global.password_entry_bullets[i].SetOpacity(0);
+		}
+	}
+}
+Plymouth.SetDisplayPasswordFunction(display_password_callback);
+

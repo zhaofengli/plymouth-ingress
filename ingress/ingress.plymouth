@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=Ingress
+Description=A plymouth theme designed to mimic the Ingress loading screen
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/ingress
+ScriptFile=/usr/share/plymouth/themes/ingress/ingress.script
